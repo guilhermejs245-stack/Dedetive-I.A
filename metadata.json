@@ -1,0 +1,6 @@
+{
+  "name": "Detetive de Problemas IA",
+  "description": "Investigue mistérios cotidianos com um detetive de IA que faz perguntas estratégicas, elimina hipóteses e entrega um dossiê com causa raiz e plano de ação.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

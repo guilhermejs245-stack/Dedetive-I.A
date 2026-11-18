@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Entity Validation Helpers
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 200
+        && data.photoURL is string && data.photoURL.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDiagnosisCase(data, caseId) {
+      return data.keys().hasAll([
+          'id', 'userId', 'problem', 'caseTitle', 'engineMode',
+          'rootCause', 'preventionTip', 'actionPlan', 'completedStepIds',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'userId', 'problem', 'caseTitle', 'engineMode',
+          'rootCause', 'preventionTip', 'actionPlan', 'completedStepIds',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128
+        && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.id == caseId
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128
+        && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.problem is string && data.problem.size() >= 1 && data.problem.size() <= 1000
+        && data.caseTitle is string && data.caseTitle.size() >= 1 && data.caseTitle.size() <= 160
+        && data.engineMode is string && data.engineMode in ['gemini', 'demo']
+        && data.rootCause is string && data.rootCause.size() >= 1 && data.rootCause.size() <= 3000
+        && data.preventionTip is string && data.preventionTip.size() >= 1 && data.preventionTip.size() <= 1500
+        && data.actionPlan is list && data.actionPlan.size() >= 1 && data.actionPlan.size() <= 8
+        && data.actionPlan[0] is map
+        && data.completedStepIds is list && data.completedStepIds.size() <= 8
+        && (data.completedStepIds.size() == 0 || data.completedStepIds[0] is string)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Private User Profiles (PII strictly restricted to owning user)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Saved Diagnosis Cases (Strictly private to owner)
+    match /cases/{caseId} {
+      allow get: if isSignedIn()
+        && isValidId(caseId)
+        && existing().userId == request.auth.uid;
+      allow list: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isEmailVerified()
+        && isValidId(caseId)
+        && isValidDiagnosisCase(incoming(), caseId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(caseId)
+        && isValidDiagnosisCase(incoming(), caseId)
+        && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['completedStepIds', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly([
+            'caseTitle', 'rootCause', 'actionPlan', 'preventionTip', 'completedStepIds', 'updatedAt'
+          ])
+        );
+      allow delete: if isSignedIn()
+        && isValidId(caseId)
+        && existing().userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile stored privately per user UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name from Google Login.",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address (PII, restricted to owner only).",
+          "maxLength": 200
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile avatar URL from Google Login.",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was last updated."
+        }
+      },
+      "required": ["uid", "displayName", "email", "photoURL", "createdAt", "updatedAt"]
+    },
+    "DiagnosisCase": {
+      "title": "DiagnosisCase",
+      "description": "Saved problem diagnosis with root cause, action plan, and checklist progress.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Document ID of the saved diagnosis case.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "problem": {
+          "type": "string",
+          "description": "Original problem description submitted by the user.",
+          "maxLength": 1000
+        },
+        "caseTitle": {
+          "type": "string",
+          "description": "Short diagnostic title for the problem.",
+          "maxLength": 160
+        },
+        "engineMode": {
+          "type": "string",
+          "enum": ["gemini", "demo"],
+          "description": "Engine used to generate the diagnosis.",
+          "maxLength": 20
+        },
+        "rootCause": {
+          "type": "string",
+          "description": "Direct explanation of what is causing the problem.",
+          "maxLength": 3000
+        },
+        "preventionTip": {
+          "type": "string",
+          "description": "Practical guidance to avoid recurrence.",
+          "maxLength": 1500
+        },
+        "actionPlan": {
+          "type": "array",
+          "description": "Ordered list of changes/steps to fix the problem (up to 8 steps)."
+        },
+        "completedStepIds": {
+          "type": "array",
+          "description": "List of completed action step IDs (up to 8)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when case was saved."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when case was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "problem",
+        "caseTitle",
+        "engineMode",
+        "rootCause",
+        "preventionTip",
+        "actionPlan",
+        "completedStepIds",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profiles isolated strictly to the owning authenticated user."
+    },
+    "/cases/{caseId}": {
+      "schema": { "$ref": "#/entities/DiagnosisCase" },
+      "description": "User-owned problem diagnosis dossiers and interactive checklist states."
+    }
+  }
+}
