@@ -1,23 +1,22 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { plusJakarta } from '@/lib/fonts';
-import { FirebaseProvider } from '@/components/FirebaseProvider';
 
 export const metadata: Metadata = {
   title: 'Detetive de Problemas IA',
   description:
-    'Descubra imediatamente o que está ocasionando seu problema cotidiano, o que mudar para resolver e salve seus diagnósticos na sua conta.',
+    'Descubra imediatamente o que está ocasionando seu problema cotidiano e exatamente o que mudar para resolver.',
   openGraph: {
     title: 'Detetive de Problemas IA',
     description:
-      'Descubra imediatamente o que está ocasionando seu problema cotidiano, o que mudar para resolver e salve seus diagnósticos na sua conta.',
+      'Descubra imediatamente o que está ocasionando seu problema cotidiano e exatamente o que mudar para resolver.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Detetive de Problemas IA',
     description:
-      'Descubra imediatamente o que está ocasionando seu problema cotidiano, o que mudar para resolver e salve seus diagnósticos na sua conta.',
+      'Descubra imediatamente o que está ocasionando seu problema cotidiano e exatamente o que mudar para resolver.',
   },
 };
 
@@ -36,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         suppressHydrationWarning
         className={`${plusJakarta.className} min-h-screen bg-[#05070B] text-[#E0F2FE] antialiased selection:bg-sky-500/30 selection:text-sky-100`}
       >
-        <FirebaseProvider>{children}</FirebaseProvider>
+        {children}
       </body>
     </html>
   );

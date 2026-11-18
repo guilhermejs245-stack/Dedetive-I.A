@@ -1,22 +1,11 @@
 'use client';
 
-import Image from 'next/image';
-import { useRef, useState } from 'react';
-import {
-  ArrowRight,
-  Search,
-  LogIn,
-  UserCheck,
-  FolderOpen,
-  Trash2,
-  Loader2,
-  AlertCircle,
-} from 'lucide-react';
+import { useRef } from 'react';
+import { ArrowRight, Search, Loader2, CheckSquare, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { outfit, jetbrainsMono } from '@/lib/fonts';
 import { EXAMPLE_CASES, type ExampleCase } from '@/lib/demo-detective';
-import { useAuth } from '@/components/FirebaseProvider';
-import type { EngineMode, SavedDiagnosisCase } from '@/lib/types';
+import type { EngineMode } from '@/lib/types';
 
 interface IntakeViewProps {
   problem: string;
@@ -27,10 +16,6 @@ interface IntakeViewProps {
   geminiAvailable: boolean | null;
   isLoading: boolean;
   errorMessage: string | null;
-  savedCases: SavedDiagnosisCase[];
-  casesLoading: boolean;
-  onOpenSavedCase: (item: SavedDiagnosisCase) => void;
-  onDeleteSavedCase: (caseId: string) => void;
 }
 
 export default function IntakeView({
@@ -42,13 +27,7 @@ export default function IntakeView({
   geminiAvailable,
   isLoading,
   errorMessage,
-  savedCases,
-  casesLoading,
-  onOpenSavedCase,
-  onDeleteSavedCase,
 }: IntakeViewProps) {
-  const { user, authReady, signingIn, authError, signInWithGoogle } = useAuth();
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleExampleClick = (example: ExampleCase) => {
@@ -68,87 +47,13 @@ export default function IntakeView({
     onSolveNow();
   };
 
-  const userInitial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase();
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-      className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12"
+      className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16"
     >
-      {/* Account & Login Strip */}
-      <section className="mx-auto mb-8 max-w-3xl">
-        {!authReady ? (
-          <div className="h-14 rounded-xl border border-sky-900/40 bg-[#080D16]" />
-        ) : user ? (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-sky-800/50 bg-[#080E1A] px-4 py-3">
-            <div className="flex items-center gap-3 min-w-0">
-              {user.photoURL && !avatarFailed ? (
-                <Image
-                  src={user.photoURL}
-                  alt={user.displayName || 'Foto de perfil'}
-                  width={36}
-                  height={36}
-                  referrerPolicy="no-referrer"
-                  onError={() => setAvatarFailed(true)}
-                  className="h-9 w-9 rounded-full border border-sky-700/60 object-cover shrink-0"
-                />
-              ) : (
-                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-700/60 bg-[#0E1B30] text-sm font-semibold text-sky-200 shrink-0">
-                  {userInitial}
-                </div>
-              )}
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-sm font-medium text-sky-100 truncate">
-                  <UserCheck className="h-4 w-4 text-sky-400 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{user.displayName || user.email}</span>
-                </div>
-                <p className="text-xs text-sky-300/70 truncate">
-                  Sessão ativa · Seus diagnósticos e checklists são salvos automaticamente
-                </p>
-              </div>
-            </div>
-
-            <span className={`${jetbrainsMono.className} text-xs tabular-nums text-sky-400 shrink-0`}>
-              {savedCases.length} {savedCases.length === 1 ? 'caso salvo' : 'casos salvos'}
-            </span>
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-sky-900/60 bg-[#080D16] px-4 py-3.5">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-sky-100">
-                Faça login para salvar seus diagnósticos e acompanhar suas mudanças
-              </p>
-              <p className="mt-0.5 text-xs text-sky-300/70">
-                Você também pode testar imediatamente sem entrar na conta.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              disabled={signingIn}
-              onClick={() => void signInWithGoogle()}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-sky-500/60 bg-[#0D1829] px-4 py-2 text-xs font-semibold text-sky-100 transition-colors hover:bg-sky-500 hover:text-[#040914] disabled:opacity-50 whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-            >
-              <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{signingIn ? 'Conectando...' : 'Entrar com Google'}</span>
-            </button>
-          </div>
-        )}
-
-        {authError && (
-          <div
-            role="alert"
-            className="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-950/30 px-3.5 py-2.5 text-xs text-amber-100"
-          >
-            <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
-            <span>{authError}</span>
-          </div>
-        )}
-      </section>
-
       {/* Main Direct Problem Solver Section */}
       <section className="mx-auto max-w-3xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -231,7 +136,7 @@ export default function IntakeView({
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-sky-900/40 pt-4">
               <span className="text-xs text-sky-300/60">
-                Resposta direta · Causa raiz + mudanças práticas imediatas
+                Acesso aberto · Sem cadastro · Causa + mudanças práticas imediatas
               </span>
 
               <button
@@ -277,7 +182,7 @@ export default function IntakeView({
       </section>
 
       {/* Clickable Example Cases */}
-      <section id="exemplos" className="mx-auto mt-12 max-w-4xl border-t border-sky-900/40 pt-9">
+      <section id="exemplos" className="mx-auto mt-14 max-w-4xl border-t border-sky-900/40 pt-10">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className={`${outfit.className} text-lg font-semibold text-sky-100`}>
             Exemplos rápidos para testar
@@ -317,104 +222,46 @@ export default function IntakeView({
         </div>
       </section>
 
-      {/* Saved User Cases History */}
-      <section id="meus-casos" className="mx-auto mt-12 max-w-4xl border-t border-sky-900/40 pt-9">
-        <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <FolderOpen className="h-4 w-4 text-sky-400" aria-hidden="true" />
-            <h2 className={`${outfit.className} text-lg font-semibold text-sky-100`}>
-              Meus Casos Salvos
-            </h2>
-          </div>
+      {/* How It Works */}
+      <section
+        id="como-funciona"
+        className="mx-auto mt-14 max-w-4xl border-t border-sky-900/40 pt-10"
+      >
+        <h2 className={`${outfit.className} text-lg font-semibold text-sky-100`}>
+          O que você recebe na hora
+        </h2>
 
-          {user && (
-            <span className={`${jetbrainsMono.className} text-xs tabular-nums text-sky-300/70`}>
-              {savedCases.length} {savedCases.length === 1 ? 'registro' : 'registros'}
-            </span>
-          )}
-        </div>
-
-        {!user ? (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-sky-900/50 bg-[#080D16] p-5">
+        <div className="mt-6 grid gap-8 sm:grid-cols-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-sky-400">
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <span>01. Causa do Problema</span>
+            </div>
             <p className="text-sm leading-relaxed text-sky-200/75">
-              Entre com sua conta Google para manter um histórico dos problemas analisados e marcar
-              quais mudanças você já aplicou.
-            </p>
-            <button
-              type="button"
-              disabled={signingIn}
-              onClick={() => void signInWithGoogle()}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-xs font-semibold text-[#040914] transition-colors hover:bg-sky-400 disabled:opacity-50 whitespace-nowrap shrink-0"
-            >
-              <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Entrar com Google</span>
-            </button>
-          </div>
-        ) : casesLoading ? (
-          <div className="mt-4 space-y-3">
-            <div className="h-16 rounded-xl border border-sky-900/40 bg-[#080D16]" />
-            <div className="h-16 rounded-xl border border-sky-900/40 bg-[#080D16]" />
-          </div>
-        ) : savedCases.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-sky-900/50 bg-[#080D16] p-5">
-            <p className="text-sm text-sky-200/75">
-              Nenhum diagnóstico salvo ainda. Descreva um problema acima e clique em{' '}
-              <strong className="font-medium text-sky-100">Ver Solução Agora</strong> para salvar
-              seu primeiro caso aqui.
+              Explicação clara e direta sobre o que está ocasionando o sintoma relatado.
             </p>
           </div>
-        ) : (
-          <div className="mt-4 divide-y divide-sky-900/40 rounded-xl border border-sky-900/50 bg-[#080D16]">
-            {savedCases.map((item) => {
-              const doneCount = item.completedStepIds?.length ?? 0;
-              const totalCount = item.actionPlan?.length ?? 0;
-              return (
-                <div
-                  key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-4 p-4 transition-colors hover:bg-[#0B1220]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onOpenSavedCase(item)}
-                    className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded"
-                  >
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-sky-400/90">
-                      <span>{item.engineMode === 'gemini' ? 'IA Gemini' : 'Modo Demo'}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className={`${jetbrainsMono.className} tabular-nums`}>
-                        {doneCount} de {totalCount} mudanças aplicadas
-                      </span>
-                    </div>
-                    <p className={`${outfit.className} mt-1 text-base font-medium text-sky-50`}>
-                      {item.caseTitle}
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-sky-300/70">
-                      &ldquo;{item.problem}&rdquo;
-                    </p>
-                  </button>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => onOpenSavedCase(item)}
-                      className="min-h-[38px] rounded-lg border border-sky-800/70 bg-[#0C1526] px-3 py-1.5 text-xs font-medium text-sky-100 hover:border-sky-500/70 hover:text-white"
-                    >
-                      Abrir Solução
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeleteSavedCase(item.id)}
-                      aria-label={`Excluir caso ${item.caseTitle}`}
-                      className="inline-flex min-h-[38px] min-w-[38px] items-center justify-center rounded-lg border border-sky-900/60 text-sky-400/75 transition-colors hover:border-amber-500/50 hover:text-amber-300"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-sky-400">
+              <CheckSquare className="h-4 w-4" aria-hidden="true" />
+              <span>02. O que Mudar Agora</span>
+            </div>
+            <p className="text-sm leading-relaxed text-sky-200/75">
+              Checklist prática ordenada da mudança mais simples à mais avançada para resolver.
+            </p>
           </div>
-        )}
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-sky-400">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              <span>03. Prevenção</span>
+            </div>
+            <p className="text-sm leading-relaxed text-sky-200/75">
+              Orientação objetiva para evitar que o mesmo problema volte a acontecer.
+            </p>
+          </div>
+        </div>
       </section>
     </motion.div>
   );

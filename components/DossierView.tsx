@@ -9,14 +9,11 @@ import {
   ShieldCheck,
   Search,
   SlidersHorizontal,
-  LogIn,
-  CheckCircle2,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { outfit, jetbrainsMono } from '@/lib/fonts';
-import { useAuth } from '@/components/FirebaseProvider';
 import type { DirectSolutionResponse, EngineMode } from '@/lib/types';
 
 interface DossierViewProps {
@@ -25,12 +22,9 @@ interface DossierViewProps {
   completedStepIds: string[];
   onToggleStep: (stepId: string) => void;
   engineMode: EngineMode;
-  savedCaseId: string | null;
-  isSaving: boolean;
   isRefining: boolean;
   refineError: string | null;
   onRefine: (detail: string) => void;
-  onSaveNow: () => void;
   onReset: () => void;
 }
 
@@ -40,15 +34,11 @@ export default function DossierView({
   completedStepIds,
   onToggleStep,
   engineMode,
-  savedCaseId,
-  isSaving,
   isRefining,
   refineError,
   onRefine,
-  onSaveNow,
   onReset,
 }: DossierViewProps) {
-  const { user, signingIn, signInWithGoogle } = useAuth();
   const [copied, setCopied] = useState(false);
   const [refinementText, setRefinementText] = useState('');
 
@@ -90,13 +80,6 @@ export default function DossierView({
     onRefine(trimmed);
   };
 
-  const handleLoginAndSave = async () => {
-    const loggedUser = await signInWithGoogle();
-    if (loggedUser) {
-      onSaveNow();
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -114,21 +97,6 @@ export default function DossierView({
             <span className="text-sky-300/80">
               {engineMode === 'gemini' ? 'IA Gemini' : 'Modo Demonstração'}
             </span>
-            {user && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="inline-flex items-center gap-1 text-sky-300">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-sky-400" aria-hidden="true" />
-                  <span>
-                    {isSaving
-                      ? 'Salvando na sua conta...'
-                      : savedCaseId
-                        ? 'Salvo na sua conta'
-                        : 'Sincronizando...'}
-                  </span>
-                </span>
-              </>
-            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -172,24 +140,6 @@ export default function DossierView({
           </p>
         )}
       </header>
-
-      {/* Prompt to login & save when signed out */}
-      {!user && (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-sky-800/50 bg-[#080E1A] px-4 py-3.5">
-          <p className="text-xs leading-relaxed text-sky-200/85 sm:text-sm">
-            Faça login com Google para salvar este diagnóstico e marcar quais mudanças você já fez.
-          </p>
-          <button
-            type="button"
-            disabled={signingIn}
-            onClick={() => void handleLoginAndSave()}
-            className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-sky-500 px-3.5 py-2 text-xs font-semibold text-[#040914] transition-colors hover:bg-sky-400 disabled:opacity-50 whitespace-nowrap shrink-0"
-          >
-            <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>{signingIn ? 'Entrando...' : 'Entrar e Salvar'}</span>
-          </button>
-        </div>
-      )}
 
       {/* Main Direct Diagnosis & Action Plan */}
       <div className="mt-7 space-y-7">

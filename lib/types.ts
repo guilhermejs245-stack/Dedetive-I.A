@@ -21,17 +21,3 @@ export interface DirectDiagnosisRequest {
   problem: string;
   refinementNote?: string;
 }
-
-export interface SavedDiagnosisCase {
-  id: string;
-  userId: string;
-  problem: string;
-  caseTitle: string;
-  engineMode: EngineMode;
-  rootCause: string;
-  preventionTip: string;
-  actionPlan: ActionStep[];
-  completedStepIds: string[];
-  createdAt?: unknown;
-  updatedAt?: unknown;
-}
